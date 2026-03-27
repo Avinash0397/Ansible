@@ -1,77 +1,82 @@
-# ASSIGNMENT 3 
+# Assignment-5
+-Ansible Role for PostgreSQL Installation
 
- **create remote server**
- ![Pasted image (2)](https://github.com/user-attachments/assets/66d2be3f-a677-4b63-b649-ed4cdbb90b65)
- 
-- **create inventory**
+**Objective**
+
+This assignment focuses on creating an **Ansible Role** to install **PostgreSQL** on multiple servers.  
+The role supports:
+- Version-specific installation
+- OS-independence (CentOS/Ubuntu)
+- Jinja2 templating for configurations
+- Handlers for service management (start/restart)
+- Variables for flexible configurations
+
+**Create Inventory File**
 ```bash
 vi inventory.ini
 ```
-- **create playbook**
+
+**create playbook**
 ```bash
 vi playbook.yml
-
-``` 
-## Project Objectives
-
-- Automate the setup of complete infrastructure on AWS using Ansible.
-- Build and deploy the [Spring3HibernateApp](https://github.com/opstree/spring3hibernate) Java application.
-- Ensure end-to-end provisioning, configuration, and deployment without manual intervention.
-
----
-
-### Steps Performed
-
-1. **Install MySQL Server**  
-Install and configure MySQL database required for the Spring3HibernateApp.
-
-2. **Install Maven**  
-Install Maven to build the Java application.
-
-3. **Clone and Build Application**  
-
-Clone the Spring3HibernateApp repository.
-
-Build the project and generate the `.war` file using Maven.
-
-4. **Install Java JDK 11**  
-
-Install Java Development Kit (JDK) version 11 on the server.
-
-5. **Install Apache Tomcat Server**  
-
-Install and configure Apache Tomcat (version 7.0.108).
-
-6. **Deploy WAR File**
-
-Copy the generated `.war` file to the Tomcat `webapps` directory:
-   
-   ```bash
-   /opt/tomcat/apache-tomcat-7.0.108/webapps/
-   ```
-
-8. **Restart Tomcat Service**  
-   Restart the Tomcat server to deploy the application.
-
-**Run playbook**
-```bash
-ansible-playbook -i ass-3-inventory spring3hibernate_setup.yml 
-```
-![Screenshot 2025-04-24 135118](https://github.com/user-attachments/assets/193fc165-3693-45fa-9e87-14038c40c71f)
-
-
-
-## Webview
-```bash
-47.129.56.19:8080
 ```
 
-![Screenshot 2025-04-24 140034](https://github.com/user-attachments/assets/fae0b5f6-3433-47d5-8df1-9ba569000e1b)
+![Screenshot 2025-04-29 005438](https://github.com/user-attachments/assets/42583adc-429b-426b-9fab-568c3b654b41)
+
+
+**create role**
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```
+
+![Screenshot 2025-04-28 232810](https://github.com/user-attachments/assets/3cb46b4d-e159-4bb3-8b69-f6567f84cd00)
 
 
 ```bash
-47.129.56.19:8080/Spring3HibernateApp/
+tree
 ```
 
-![Screenshot 2025-04-24 142119](https://github.com/user-attachments/assets/519c0579-ee76-4495-a1e9-3881b52fad3e)
+![Screenshot 2025-04-28 232825](https://github.com/user-attachments/assets/d5a33564-3f6b-4691-b026-d5854dc9e177)
 
+**Run ansible playbook**
+
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```
+
+![Screenshot 2025-04-29 001020](https://github.com/user-attachments/assets/8db18c29-8a78-4235-8208-e5550a6d3f14)
+
+
+**check tool install on remote server 1**
+
+```bash
+sudo systemctl status postgresql
+```
+
+```bash
+ps -aux | grep postgresql
+```
+
+![Screenshot 2025-04-29 001713](https://github.com/user-attachments/assets/c8cabe5f-7de7-454b-9ed4-03dfb2011942)
+
+
+**check tool install on remote server 2**
+
+```bash
+sudo systemctl status postgresql
+```
+
+```bash
+ps -aux | grep postgresql
+```
+
+
+![Screenshot 2025-04-29 001954](https://github.com/user-attachments/assets/bdd764b3-e07d-42e8-a137-f2e5ec97f2ea)
+
+
+
+
+
+
+
+  

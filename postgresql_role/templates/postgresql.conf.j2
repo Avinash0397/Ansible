@@ -1,0 +1,34 @@
+# PostgreSQL Configuration Template
+
+# Listen Addresses
+listen_addresses = '*'
+
+# Port
+port = {{ postgresql_port }}
+
+# Enable SSL
+ssl = off
+
+# Database storage settings
+data_directory = '{{ postgresql_data_dir }}'
+
+# Connection settings
+max_connections = 100
+shared_buffers = 128MB
+work_mem = 4MB
+
+# Authentication settings
+# Allow password authentication
+host    all             all             0.0.0.0/0               md5
+
+# Logging settings
+log_directory = '/var/log/postgresql'
+log_filename = 'postgresql-%a.log'
+log_rotation_age = 1d
+log_rotation_size = 10MB
+
+# Temporary file storage
+temp_buffers = 8MB
+temp_file_limit = -1
+
+# End of PostgreSQL configuration

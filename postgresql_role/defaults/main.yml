@@ -1,0 +1,19 @@
+---
+# defaults file for postgresql_role
+
+postgresql_version: "13"
+postgresql_user: "postgres"
+postgresql_db: "mydb"
+postgresql_port: 5432
+postgresql_data_dir: "/var/lib/pgsql/{{ postgresql_version }}"
+postgresql_config_file: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
+postgresql_service_name: "postgresql"
+
+# OS-specific configurations
+ubuntu_packages:
+  - postgresql
+  - postgresql-contrib
+centos_packages:
+  - postgresql-server
+  - postgresql-contrib
+...

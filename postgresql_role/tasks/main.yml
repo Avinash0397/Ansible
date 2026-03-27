@@ -1,0 +1,42 @@
+---
+- name: Install required PostgreSQL packages
+  package:
+    name: "{{ postgresql_packages }}"
+    state: present
+  become: true
+
+- name: Remove existing PostgreSQL data directory
+  file:
+    path: "/var/lib/pgsql/data"
+    state: absent
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Initialize PostgreSQL database (RedHat family only)
+  command: "postgresql-setup --initdb --unit postgresql"
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+  ignore_errors: yes
+
+- name: Ensure PostgreSQL config directory exists
+  file:
+    path: "{{ postgresql_config_file | default('/home/ubuntu/postgresql.conf') }}"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Configure PostgreSQL
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ postgresql_config_file | default('/home/ubuntu/postgresql.conf') }}"
+  become: true
+  notify:
+    - restart postgresql
+
+- name: Ensure PostgreSQL is started and enabled
+  service:
+    name: "{{ postgresql_service_name }}"
+    state: started
+    enabled: true
+  become: true
+...

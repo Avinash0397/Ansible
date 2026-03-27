@@ -1,7 +1,6 @@
 ---
-- name: Manage system with system_manager role
-  hosts: all
-  become: yes
-
+- name: Installing postgresql my tool
+  hosts: web
+  become: true
   roles:
-    - system_manager           
+    - postgresql_role
