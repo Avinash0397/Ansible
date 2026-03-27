@@ -1,38 +1,77 @@
-# ASSIGNMENT 4
+# ASSIGNMENT 3 
 
-**create remote server**
-
-**create inventory**
-
+ **create remote server**
+ ![Pasted image (2)](https://github.com/user-attachments/assets/66d2be3f-a677-4b63-b649-ed4cdbb90b65)
+ 
+- **create inventory**
 ```bash
 vi inventory.ini
 ```
-
-**create playbook**
-
+- **create playbook**
 ```bash
-vi playbook
-```
+vi playbook.yml
 
-**create role**
+``` 
+## Project Objectives
 
-```bash
-ansible-galaxy init system_manager
-```
+- Automate the setup of complete infrastructure on AWS using Ansible.
+- Build and deploy the [Spring3HibernateApp](https://github.com/opstree/spring3hibernate) Java application.
+- Ensure end-to-end provisioning, configuration, and deployment without manual intervention.
 
-```bash
-tree
-```
+---
 
-![Screenshot 2025-04-24 124634](https://github.com/user-attachments/assets/86dc9ee5-f96f-4ff8-83e6-8ccedc0ada4b)
+### Steps Performed
 
+1. **Install MySQL Server**  
+Install and configure MySQL database required for the Spring3HibernateApp.
 
-## Execution
+2. **Install Maven**  
+Install Maven to build the Java application.
+
+3. **Clone and Build Application**  
+
+Clone the Spring3HibernateApp repository.
+
+Build the project and generate the `.war` file using Maven.
+
+4. **Install Java JDK 11**  
+
+Install Java Development Kit (JDK) version 11 on the server.
+
+5. **Install Apache Tomcat Server**  
+
+Install and configure Apache Tomcat (version 7.0.108).
+
+6. **Deploy WAR File**
+
+Copy the generated `.war` file to the Tomcat `webapps` directory:
+   
+   ```bash
+   /opt/tomcat/apache-tomcat-7.0.108/webapps/
+   ```
+
+8. **Restart Tomcat Service**  
+   Restart the Tomcat server to deploy the application.
 
 **Run playbook**
+```bash
+ansible-playbook -i ass-3-inventory spring3hibernate_setup.yml 
+```
+![Screenshot 2025-04-24 135118](https://github.com/user-attachments/assets/193fc165-3693-45fa-9e87-14038c40c71f)
+
+
+
+## Webview
+```bash
+47.129.56.19:8080
+```
+
+![Screenshot 2025-04-24 140034](https://github.com/user-attachments/assets/fae0b5f6-3433-47d5-8df1-9ba569000e1b)
+
 
 ```bash
-ansible-playbook -i inventory.ini playbook.yml
+47.129.56.19:8080/Spring3HibernateApp/
 ```
-![Screenshot 2025-04-24 124607](https://github.com/user-attachments/assets/e5c9012a-1c5b-4c37-a616-1d01c5de77c6)
+
+![Screenshot 2025-04-24 142119](https://github.com/user-attachments/assets/519c0579-ee76-4495-a1e9-3881b52fad3e)
 

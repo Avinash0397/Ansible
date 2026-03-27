@@ -1,0 +1,63 @@
+---
+- name: Deploy Spring3HibernateApp on AWS EC2
+  hosts: node1
+  become: true
+
+  vars:
+    tomcat_version: "7.0.108"
+    tomcat_install_path: "/opt/tomcat"
+
+  tasks:
+    - name: Install packages with loop
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - maven
+        - mysql-server
+        - openjdk-11-jdk
+
+    - name: Clone the Spring3HibernateApp repo
+      git:
+        repo: https://github.com/opstree/spring3hibernate.git
+        dest: /home/{{ ansible_user }}/spring3hibernate
+
+    - name: Create WAR file using Maven
+      shell: mvn package
+      args:
+        chdir: /home/{{ ansible_user }}/spring3hibernate
+
+    - name: Download Tomcat tar
+      get_url:
+        url: "https://archive.apache.org/dist/tomcat/tomcat-7/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: /tmp/tomcat.tar.gz
+
+    - name: Create tomcat directory
+      file:
+        path: "{{ tomcat_install_path }}"
+        state: directory
+
+    - name: Extract Tomcat
+      unarchive:
+        src: /tmp/tomcat.tar.gz
+        dest: "{{ tomcat_install_path }}"
+        remote_src: yes
+
+    - name: Copy WAR file to Tomcat webapps
+      copy:
+        src: "/home/{{ ansible_user }}/spring3hibernate/target/Spring3HibernateApp.war"
+        dest: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/webapps/"
+        remote_src: yes
+
+    - name: Make tomcat scripts executable
+      file:
+        path: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/bin/{{ item }}"
+        mode: "0755"
+      loop:
+        - startup.sh
+        - shutdown.sh
+
+    - name: Start Tomcat
+      shell: "{{ tomcat_install_path }}/apache-tomcat-{{ tomcat_version }}/bin/startup.sh"

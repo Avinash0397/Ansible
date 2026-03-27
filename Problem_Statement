@@ -1,8 +1,15 @@
-Assignment-4
-Create a System manager ansible role with below feature
+Ansile Assignment-3
 
-I should be able to manage softwares that needs to be installed
-I should be able to manage user's on the system
-I should be able to manage various git repository
-Various folder structures that should exist on a VM
-Think of other system specific settings that you should manage
+Setup an entire infra using ansible playbook on aws
+Setup Spring3HibernateApp (https://github.com/opstree/spring3hibernate) on created infra using ansible playbook by following the below steps:
+Install MySQL
+Create the war file for Spring3HibernateApp using maven
+Install JDK 11
+Install Tomcat
+Send the war file created earlier to path "/opt/tomcat/apache-tomcat-7.0.108/webapps/"
+Restart tomcat service
+(edited)
+opstree/spring3hibernate
+A java loaded application for various testing purpose
+Website
+https://opstree.github.io
