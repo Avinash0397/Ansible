@@ -1,0 +1,66 @@
+- name: Install nginx, configure logrotate, setup websites and rotation
+  hosts: webservers
+  become: true
+  strategy: linear
+  serial: 1
+
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Start and enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Configure nginx log rotation
+      copy:
+        dest: /etc/logrotate.d/nginx
+        content: |
+          /var/log/nginx/*.log {
+              size 1G
+              rotate 4
+              compress
+              missingok
+              notifempty
+              create 0640 www-data adm
+              sharedscripts
+              postrotate
+                  [ -f /var/run/nginx.pid ] && kill -USR1 cat /var/run/nginx.pid
+              endscript
+          }
+
+    - name: Create Tanya website page
+      copy:
+        dest: /var/www/html/tanya.html
+        content: "<h1>Welcome to Tanya's Website</h1>"
+
+    - name: Create Heena website page
+      copy:
+        dest: /var/www/html/heena.html
+        content: "<h1>Welcome to Heena's Website</h1>"
+
+    - name: Set initial symlink to Tanya
+      file:
+        src: /var/www/html/tanya.html
+        dest: /var/www/html/index.html
+        state: link
+        force: yes
+
+    - name: Create cron job to rotate to Heena
+      cron:
+        name: "Rotate to Heena website"
+        minute: "0"
+        hour: "*/2"
+        job: "ln -sf /var/www/html/heena.html /var/www/html/index.html"
+
+    - name: Create cron job to rotate back to Tanya
+      cron:
+        name: "Rotate to Tanya website"
+        minute: "0"
+        hour: "1-23/2"
+        job: "ln -sf /var/www/html/tanya.html /var/www/html/index.html"
