@@ -1,0 +1,25 @@
+system_software_list:
+  - git
+  - curl
+  - htop
+
+system_users:
+  - name: deployer
+    shell: /bin/bash
+    groups: sudo
+    state: present
+
+git_repositories:
+  - repo: "https://github.com/git/git.git"
+    dest: "/opt/git-source"
+
+required_directories:
+  - /opt/app
+  - /var/log/custom
+  - /data/backups
+
+timezone: "Asia/Kolkata"
+
+sysctl_settings:
+  net.ipv4.ip_forward: 1
+  vm.swappiness: 10

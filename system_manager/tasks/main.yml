@@ -1,0 +1,39 @@
+---
+
+- name: Install required software
+  package:
+    name: "{{ system_software_list }}"
+    state: present
+
+- name: Ensure users are present
+  user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+    groups: "{{ item.groups }}"
+    state: "{{ item.state }}"
+  loop: "{{ system_users }}"
+
+- name: Clone Git repositories
+  git:
+    repo: "{{ item.repo }}"
+    dest: "{{ item.dest }}"
+  loop: "{{ git_repositories }}"
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ required_directories }}"
+
+- name: Set system timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Set sysctl parameters
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop: "{{ sysctl_settings | dict2items }}"

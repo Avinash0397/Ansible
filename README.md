@@ -1,75 +1,38 @@
-# Ansible Assignment-2  
-## Automated Nginx and Apache Setup with Time-Based Website Rotation (Without Roles)
+# ASSIGNMENT 4
 
-This project uses two Ansible playbooks and a static inventory to automate:
+**create remote server**
 
-- Nginx installation and log management
-- Hosting multiple websites with 2-hour rotation
-- Apache installation
-- Nginx as a reverse proxy to Apache
-- Rolling updates on servers one by one
-
-
-## Playbooks Overview
-
-| Playbook           | Purpose                               |
-|--------------------|---------------------------------------|
-| `nginx_setup.yml`   | Install and configure Nginx, manage log size, rotate website content |
-| `apache_proxy.yml`  | Install Apache, configure Nginx as reverse proxy to Apache |
-
-
-## Prerequisites
-
-- Ansible installed on control node
-- SSH access setup to all managed nodes
-- Correct permissions and `sudo` privileges
-- Basic DNS or `/etc/hosts` entry for `team.opstree.com`
-
----
-
-## How to Run
-
-### 1. Clone the Repository
+**create inventory**
 
 ```bash
-git clone https://github.com/your-org/ansible-assignment-2.git
-cd ansible-assignment-2
+vi inventory.ini
 ```
 
-### 2. Update Inventory
-
-Edit the `inventory` file and add your server IPs and users.
-
-### 3. Run Nginx Setup
+**create playbook**
 
 ```bash
-ansible-playbook -i inventory nginx_setup.yml
+vi playbook
 ```
 
-![Screenshot 2025-04-22 163033](https://github.com/user-attachments/assets/e8f7ceb9-2851-4e1a-bf30-1812a6e48906)
-
-
-### 4. Run Apache and Reverse Proxy Setup
+**create role**
 
 ```bash
-ansible-playbook -i inventory apache_proxy.yml
+ansible-galaxy init system_manager
 ```
-
-![Screenshot 2025-04-28 032044](https://github.com/user-attachments/assets/f5066e3e-e92b-4ddd-a3cd-0c3b74158652)
-
-
-> Both playbooks are configured to update servers one-by-one using `serial: 1`.
-
----
-
-## Webview
-```bash
-tanya.opstree.com
-```
-![Screenshot 2025-04-22 171433](https://github.com/user-attachments/assets/759b1a73-5b6d-4fcd-bbea-62fd56af1e15)
 
 ```bash
-heena.opstree.com
+tree
 ```
 
-![Screenshot 2025-04-22 171447](https://github.com/user-attachments/assets/6e13f120-cc5a-4af9-a714-3aa5c73a1b41)
+![Screenshot 2025-04-24 124634](https://github.com/user-attachments/assets/86dc9ee5-f96f-4ff8-83e6-8ccedc0ada4b)
+
+
+## Execution
+
+**Run playbook**
+
+```bash
+ansible-playbook -i inventory.ini playbook.yml
+```
+![Screenshot 2025-04-24 124607](https://github.com/user-attachments/assets/e5c9012a-1c5b-4c37-a616-1d01c5de77c6)
+

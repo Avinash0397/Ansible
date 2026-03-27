@@ -1,0 +1,8 @@
+---
+# handlers file for system_manager
+#
+# Example handler to restart ssh if config is changed
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted
