@@ -1,0 +1,99 @@
+---
+# Environment
+cluster_name: rke2-prod
+environment: prod
+timezone: UTC
+
+# Networking
+rke2_api_server_port: 6443
+rke2_registration_port: 9345
+rke2_cluster_cidr: 10.42.0.0/16
+rke2_service_cidr: 10.43.0.0/16
+rke2_cluster_dns: 10.43.0.10
+rke2_write_kubeconfig_mode: "0640"
+rke2_tls_sans:
+  - k8s-api.internal.example.com
+  - 10.20.1.4
+
+# RKE2 version channel
+rke2_channel_url: https://update.rke2.io/v1-release/channels/stable
+rke2_install_script_url: https://get.rke2.io
+
+# CNI/Ingress defaults in RKE2
+rke2_disable_components: []
+
+# Embedded etcd snapshot policy
+rke2_etcd_snapshot_schedule_cron: "0 */6 * * *"
+rke2_etcd_snapshot_retention: 28
+rke2_etcd_snapshot_dir: /var/lib/rancher/rke2/server/db/snapshots
+
+# Cluster bootstrap behavior
+rke2_wait_retries: 40
+rke2_wait_delay: 15
+
+# OS level settings
+required_kernel_modules:
+  - overlay
+  - br_netfilter
+
+required_sysctl:
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+  net.ipv4.ip_forward: 1
+  net.ipv4.tcp_keepalive_time: 600
+  net.ipv4.tcp_keepalive_intvl: 30
+  net.ipv4.tcp_keepalive_probes: 10
+
+required_packages:
+  - curl
+  - wget
+  - jq
+  - tar
+  - iptables
+  - socat
+  - conntrack
+  - chrony
+  - ufw
+  - nfs-common
+  - apt-transport-https
+  - ca-certificates
+
+# Firewall ports for RKE2 server/control-plane nodes
+firewall_allow_tcp:
+  - 22
+  - 6443
+  - 9345
+  - 2379
+  - 2380
+  - 10250
+firewall_allow_udp:
+  - 8472
+
+# Admin user for kubeconfig deployment
+cluster_admin_user: azureadmin
+cluster_admin_group: azureadmin
+cluster_admin_home: "/home/{{ cluster_admin_user }}"
+
+# Endpoint used by join servers and admin kubeconfig
+rke2_server_endpoint: "https://{{ hostvars[groups['rke2_primary'][0]].ansible_host }}:{{ rke2_registration_port }}"
+kubeconfig_server_endpoint: "https://{{ hostvars[groups['rke2_primary'][0]].ansible_host }}:{{ rke2_api_server_port }}"
+
+# Validation controls
+validation_required_nodes: 3
+validation_namespace: kube-system
+validation_ingress_label_selector: app.kubernetes.io/name=rke2-ingress-nginx
+validation_metrics_label_selector: k8s-app=metrics-server
+
+# Azure placeholders (encrypt with Ansible Vault before use)
+azure_subscription_id: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  PLACEHOLDER_REPLACE_WITH_VAULT_DATA
+azure_tenant_id: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  PLACEHOLDER_REPLACE_WITH_VAULT_DATA
+azure_client_id: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  PLACEHOLDER_REPLACE_WITH_VAULT_DATA
+azure_client_secret: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  PLACEHOLDER_REPLACE_WITH_VAULT_DATA

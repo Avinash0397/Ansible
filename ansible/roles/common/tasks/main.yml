@@ -1,0 +1,85 @@
+---
+- name: Ensure package cache is updated
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade installed packages
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Install required base packages
+  ansible.builtin.apt:
+    name: "{{ required_packages }}"
+    state: present
+
+- name: Disable swap immediately
+  ansible.builtin.command: swapoff -a
+  when: ansible_swaptotal_mb | int > 0
+  changed_when: ansible_swaptotal_mb | int > 0
+
+- name: Disable swap persistently in fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: Load required kernel modules now
+  ansible.builtin.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ required_kernel_modules }}"
+
+- name: Persist required kernel modules
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    mode: "0644"
+    content: |
+      {% for module in required_kernel_modules %}
+      {{ module }}
+      {% endfor %}
+
+- name: Configure Kubernetes sysctl settings
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    mode: "0644"
+    content: |
+      {% for key, value in required_sysctl.items() %}
+      {{ key }} = {{ value }}
+      {% endfor %}
+  notify: Apply sysctl settings
+
+- name: Ensure chrony service is enabled and running
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Allow SSH in UFW
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow required TCP ports in UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ firewall_allow_tcp }}"
+
+- name: Allow required UDP ports in UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  loop: "{{ firewall_allow_udp }}"
+
+- name: Enable UFW firewall
+  community.general.ufw:
+    state: enabled
+    policy: allow

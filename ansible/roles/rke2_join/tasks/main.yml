@@ -1,0 +1,64 @@
+---
+- name: Assert that primary token is available
+  ansible.builtin.assert:
+    that:
+      - hostvars[groups['rke2_primary'][0]].rke2_cluster_token is defined
+      - hostvars[groups['rke2_primary'][0]].rke2_cluster_token | length > 0
+    fail_msg: "Cluster token not found. Run primary bootstrap stage first."
+
+- name: Set join token locally
+  ansible.builtin.set_fact:
+    rke2_join_token: "{{ hostvars[groups['rke2_primary'][0]].rke2_cluster_token }}"
+
+- name: Create RKE2 configuration directory
+  ansible.builtin.file:
+    path: /etc/rancher/rke2
+    state: directory
+    mode: "0750"
+
+- name: Render join server RKE2 config
+  ansible.builtin.template:
+    src: rke2-join-config.yaml.j2
+    dest: /etc/rancher/rke2/config.yaml
+    mode: "0600"
+  notify: Restart rke2-server
+
+- name: Download RKE2 install script
+  ansible.builtin.get_url:
+    url: "{{ rke2_install_script_url }}"
+    dest: /usr/local/src/rke2-install.sh
+    mode: "0755"
+
+- name: Install RKE2 server binaries
+  ansible.builtin.command: /usr/local/src/rke2-install.sh
+  args:
+    creates: /etc/systemd/system/rke2-server.service
+  environment:
+    INSTALL_RKE2_TYPE: server
+    INSTALL_RKE2_CHANNEL_URL: "{{ rke2_channel_url }}"
+
+- name: Flush handlers to apply latest config
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure rke2-server service is enabled and started
+  ansible.builtin.service:
+    name: rke2-server
+    enabled: true
+    state: started
+
+- name: Wait for local RKE2 service registration port
+  ansible.builtin.wait_for:
+    port: "{{ rke2_registration_port }}"
+    host: "{{ ansible_host }}"
+    delay: 5
+    timeout: 240
+
+- name: Validate joined server readiness
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    get node {{ inventory_hostname }} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  register: join_ready_check
+  changed_when: false
+  retries: "{{ rke2_wait_retries }}"
+  delay: "{{ rke2_wait_delay }}"
+  until: join_ready_check.stdout == "True"

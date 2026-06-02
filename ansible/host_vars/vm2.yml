@@ -1,0 +1,5 @@
+---
+node_name: vm2
+rke2_node_ip: 10.20.2.4
+rke2_advertise_address: 10.20.2.4
+availability_zone: "2"

@@ -1,0 +1,76 @@
+---
+- name: Create RKE2 configuration directory
+  ansible.builtin.file:
+    path: /etc/rancher/rke2
+    state: directory
+    mode: "0750"
+
+- name: Render primary RKE2 server config
+  ansible.builtin.template:
+    src: rke2-primary-config.yaml.j2
+    dest: /etc/rancher/rke2/config.yaml
+    mode: "0600"
+  notify: Restart rke2-server
+
+- name: Download RKE2 install script
+  ansible.builtin.get_url:
+    url: "{{ rke2_install_script_url }}"
+    dest: /usr/local/src/rke2-install.sh
+    mode: "0755"
+
+- name: Install RKE2 server binaries
+  ansible.builtin.command: /usr/local/src/rke2-install.sh
+  args:
+    creates: /etc/systemd/system/rke2-server.service
+  environment:
+    INSTALL_RKE2_TYPE: server
+    INSTALL_RKE2_CHANNEL_URL: "{{ rke2_channel_url }}"
+
+- name: Flush handlers to apply latest config
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure rke2-server service is enabled and started
+  ansible.builtin.service:
+    name: rke2-server
+    enabled: true
+    state: started
+
+- name: Wait for RKE2 registration port
+  ansible.builtin.wait_for:
+    port: "{{ rke2_registration_port }}"
+    host: "{{ ansible_host }}"
+    delay: 5
+    timeout: 240
+
+- name: Wait for Kubernetes API on primary
+  ansible.builtin.wait_for:
+    port: "{{ rke2_api_server_port }}"
+    host: "{{ ansible_host }}"
+    delay: 10
+    timeout: 360
+
+- name: Wait for node token to be generated
+  ansible.builtin.wait_for:
+    path: /var/lib/rancher/rke2/server/node-token
+    state: present
+    timeout: 300
+
+- name: Read primary node token
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/rke2/server/node-token
+  register: rke2_primary_token_raw
+
+- name: Store cluster join token as host fact
+  ansible.builtin.set_fact:
+    rke2_cluster_token: "{{ rke2_primary_token_raw.content | b64decode | trim }}"
+    cacheable: true
+
+- name: Validate primary node readiness
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    get node {{ inventory_hostname }} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  register: primary_ready_check
+  changed_when: false
+  retries: "{{ rke2_wait_retries }}"
+  delay: "{{ rke2_wait_delay }}"
+  until: primary_ready_check.stdout == "True"

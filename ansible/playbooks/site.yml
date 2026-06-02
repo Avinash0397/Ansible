@@ -1,0 +1,41 @@
+---
+- name: Stage 1 - Configure OS prerequisites on all RKE2 servers
+  hosts: rke2_servers
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - role: common
+
+- name: Stage 2 - Bootstrap RKE2 cluster on primary server
+  hosts: rke2_primary
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - role: rke2_primary
+
+- name: Stage 3/4 - Join remaining servers to embedded etcd cluster
+  hosts: rke2_join
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: rke2_join
+
+- name: Stage 5 - Configure kubectl access on primary
+  hosts: rke2_primary
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - role: kubectl
+
+- name: Stage 6 - Validate HA cluster health
+  hosts: rke2_primary
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  roles:
+    - role: validation

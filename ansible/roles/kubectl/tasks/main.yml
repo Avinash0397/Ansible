@@ -1,0 +1,39 @@
+---
+- name: Ensure kubectl profile path script exists
+  ansible.builtin.copy:
+    dest: /etc/profile.d/rke2-path.sh
+    mode: "0644"
+    content: |
+      export PATH=$PATH:/var/lib/rancher/rke2/bin
+
+- name: Ensure admin .kube directory exists
+  ansible.builtin.file:
+    path: "{{ cluster_admin_home }}/.kube"
+    state: directory
+    owner: "{{ cluster_admin_user }}"
+    group: "{{ cluster_admin_group }}"
+    mode: "0700"
+
+- name: Copy kubeconfig for cluster admin
+  ansible.builtin.copy:
+    src: /etc/rancher/rke2/rke2.yaml
+    dest: "{{ cluster_admin_home }}/.kube/config"
+    remote_src: true
+    owner: "{{ cluster_admin_user }}"
+    group: "{{ cluster_admin_group }}"
+    mode: "0600"
+
+- name: Point admin kubeconfig to stable API endpoint
+  ansible.builtin.replace:
+    path: "{{ cluster_admin_home }}/.kube/config"
+    regexp: 'https://127\.0\.0\.1:6443'
+    replace: "{{ kubeconfig_server_endpoint }}"
+
+- name: Verify kubectl connectivity from primary
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes
+  register: kubectl_connectivity
+  changed_when: false
+  retries: 10
+  delay: 10
+  until: kubectl_connectivity.rc == 0

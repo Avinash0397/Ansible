@@ -1,0 +1,83 @@
+---
+- name: Wait for expected node count
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes --no-headers
+  register: nodes_list
+  changed_when: false
+  retries: "{{ rke2_wait_retries }}"
+  delay: "{{ rke2_wait_delay }}"
+  until: nodes_list.stdout_lines | length == validation_required_nodes
+
+- name: Verify all nodes are Ready
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    get nodes -o jsonpath='{range .items[*]}{.metadata.name}:{range .status.conditions[?(@.type=="Ready")]}{.status}{end}{"\n"}{end}'
+  register: node_ready_status
+  changed_when: false
+  failed_when:
+    - "'False' in node_ready_status.stdout"
+    - node_ready_status.stdout_lines | length != validation_required_nodes
+
+- name: Verify etcd member health
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    -n kube-system exec etcd-{{ inventory_hostname }}
+    -- /var/lib/rancher/rke2/bin/etcdctl
+    --cacert=/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt
+    --cert=/var/lib/rancher/rke2/server/tls/etcd/server-client.crt
+    --key=/var/lib/rancher/rke2/server/tls/etcd/server-client.key
+    endpoint health --cluster
+  register: etcd_health
+  changed_when: false
+
+- name: Verify control-plane pods are healthy
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    -n kube-system get pods -l tier=control-plane --no-headers
+  register: control_plane_pods
+  changed_when: false
+  retries: 20
+  delay: 15
+  until: control_plane_pods.rc == 0
+
+- name: Verify CoreDNS is Running
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    -n kube-system get pods -l k8s-app=kube-dns --field-selector=status.phase=Running --no-headers
+  register: coredns_status
+  changed_when: false
+  retries: 20
+  delay: 15
+  until: coredns_status.stdout_lines | length > 0
+
+- name: Verify metrics-server is Running
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    -n kube-system get pods -l {{ validation_metrics_label_selector }} --field-selector=status.phase=Running --no-headers
+  register: metrics_status
+  changed_when: false
+  retries: 20
+  delay: 15
+  until: metrics_status.stdout_lines | length > 0
+
+- name: Verify ingress controller is Running
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml
+    -n kube-system get pods -l {{ validation_ingress_label_selector }} --field-selector=status.phase=Running --no-headers
+  register: ingress_status
+  changed_when: false
+  retries: 20
+  delay: 15
+  until: ingress_status.stdout_lines | length > 0
+
+- name: Output full cluster status
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes -o wide
+  register: cluster_status
+  changed_when: false
+
+- name: Print cluster status
+  ansible.builtin.debug:
+    msg:
+      - "Cluster validation succeeded."
+      - "{{ cluster_status.stdout }}"

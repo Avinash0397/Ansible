@@ -1,0 +1,22 @@
+server: "{{ rke2_server_endpoint }}"
+token: "{{ rke2_join_token }}"
+node-name: "{{ node_name | default(inventory_hostname) }}"
+node-ip: "{{ rke2_node_ip | default(ansible_host) }}"
+advertise-address: "{{ rke2_advertise_address | default(ansible_host) }}"
+write-kubeconfig-mode: "{{ rke2_write_kubeconfig_mode }}"
+cluster-cidr: "{{ rke2_cluster_cidr }}"
+service-cidr: "{{ rke2_service_cidr }}"
+cluster-dns: "{{ rke2_cluster_dns }}"
+etcd-snapshot-schedule-cron: "{{ rke2_etcd_snapshot_schedule_cron }}"
+etcd-snapshot-retention: {{ rke2_etcd_snapshot_retention }}
+etcd-snapshot-dir: "{{ rke2_etcd_snapshot_dir }}"
+tls-san:
+{% for san in rke2_tls_sans %}
+  - "{{ san }}"
+{% endfor %}
+{% if rke2_disable_components | length > 0 %}
+disable:
+{% for component in rke2_disable_components %}
+  - "{{ component }}"
+{% endfor %}
+{% endif %}
